@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies (React/Node projects)
         if: hashFiles('package.json') != ''
-        run: npm ci
+        run: npm i
 
       - name: Build (React/Node projects)
         if: hashFiles('package.json') != ''
