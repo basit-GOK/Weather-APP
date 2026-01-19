@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "../App.css";
 import axios from "axios";
 import WeatherCard from "./WeatherCard";
@@ -6,42 +6,37 @@ import WeatherCard from "./WeatherCard";
 const Temp = () => {
   const [searchData, setSearchData] = useState("karachi");
   const [weatherInfo, setWeatherInfo] = useState({});
-  const getWeatherInfo = async () => {
-    try {
-      const API = `https://api.openweathermap.org/data/2.5/weather?q=${searchData}&units=metric&appid=68b54a3618456ad3799a8e7bc6af6905
-      `;
-      await axios
-        .get(API)
-        .then(function (response) {
-          const { humidity, pressure, temp } = response.data.main;
-          const { country, sunset } = response.data.sys;
-          const { name } = response.data;
-          const { speed } = response.data.wind;
-          const { main: weathermood } = response.data.weather[0];
 
-          const myWeatherInfo = {
-            humidity,
-            pressure,
-            temp,
-            country,
-            sunset,
-            name,
-            speed,
-            weathermood,
-          };
-          setWeatherInfo(myWeatherInfo);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+  const getWeatherInfo = useCallback(async () => {
+    try {
+      const API = `https://api.openweathermap.org/data/2.5/weather?q=${searchData}&units=metric&appid=68b54a3618456ad3799a8e7bc6af6905`;
+
+      const response = await axios.get(API);
+
+      const { humidity, pressure, temp } = response.data.main;
+      const { country, sunset } = response.data.sys;
+      const { name } = response.data;
+      const { speed } = response.data.wind;
+      const { main: weathermood } = response.data.weather[0];
+
+      setWeatherInfo({
+        humidity,
+        pressure,
+        temp,
+        country,
+        sunset,
+        name,
+        speed,
+        weathermood,
+      });
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [searchData]);
 
   useEffect(() => {
     getWeatherInfo();
-  }, []);
+  }, [getWeatherInfo]);
 
   return (
     <>
@@ -58,7 +53,7 @@ const Temp = () => {
           />
           <button
             className="searchButton"
-            type="search"
+            type="button"
             onClick={getWeatherInfo}
           >
             Search
