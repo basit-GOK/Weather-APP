@@ -1,0 +1,48 @@
+name: Deploy static site to S3
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node (only needed if you have package.json)
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (React/Node projects)
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Build (React/Node projects)
+        if: hashFiles('package.json') != ''
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # If React: deploy build/ folder
+      - name: Deploy React build to S3
+        if: hashFiles('package.json') != ''
+        run: aws s3 sync build/ s3://${{ secrets.S3_BUCKET }} --delete
+
+      # If plain static: deploy repo root (excluding .git and workflow files)
+      - name: Deploy static files to S3
+        if: hashFiles('package.json') == ''
+        run: aws s3 sync . s3://${{ secrets.S3_BUCKET }} --delete --exclude ".git/*" --exclude ".github/*"
